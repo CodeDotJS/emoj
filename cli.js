@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 'use strict';
+const dns = require('dns');
 const readline = require('readline');
 const meow = require('meow');
 const logUpdate = require('log-update');
@@ -12,6 +13,8 @@ const emoj = require('./');
 // limit it to 7 results so not to overwhelm the user
 // this also reduces the chance of showing unrelated emojis
 const fetch = mem(str => emoj(str).then(arr => arr.slice(0, 7).join('  ')));
+
+const debouncer = debounce(cb => cb(), 200);
 
 const cli = meow(`
 	Usage
@@ -32,11 +35,18 @@ if (cli.input.length > 0) {
 readline.emitKeypressEvents(process.stdin);
 process.stdin.setRawMode(true);
 
-const pre = `\n${chalk.cyan('›')} `;
+const pre = `\n${chalk.bold.cyan('›')} `;
 const query = [];
 let prevResult = '';
 
-logUpdate(`${pre}${chalk.dim('Relevant emojis appear when you start writing')}\n`);
+dns.lookup('emoji.getdango.com', err => {
+	if (err && err.code === 'ENOTFOUND') {
+		logUpdate(`\n${chalk.bold.red('› ')}${chalk.dim('Please check your internet connection')}\n\n`);
+		process.exit(1);
+	} else {
+		logUpdate(`${pre}${chalk.dim('Relevant emojis will appear when you start writing')}\n\n`);
+	}
+});
 
 process.stdin.on('keypress', (ch, key) => {
 	key = key || {};
@@ -64,20 +74,22 @@ process.stdin.on('keypress', (ch, key) => {
 
 	const queryStr = query.join('');
 
-	logUpdate(`${pre}${chalk.bold(queryStr)}\n${prevResult}`);
+	logUpdate(`${pre}${chalk.bold(queryStr)}\n${prevResult}\n`);
 
 	if (query.length <= 1) {
 		prevResult = '';
-		logUpdate(`${pre}${chalk.bold(queryStr)}\n`);
+		logUpdate(`${pre}${chalk.bold(queryStr)}\n\n`);
 		return;
 	}
 
-	fetch(queryStr).then(debounce(emojis => {
-		if (query.length <= 1) {
-			return;
-		}
+	debouncer(() => {
+		fetch(queryStr).then(emojis => {
+			if (query.length <= 1) {
+				return;
+			}
 
-		prevResult = emojis;
-		logUpdate(`${pre}${chalk.bold(query.join(''))}\n${emojis}`);
-	}, 300));
+			prevResult = emojis;
+			logUpdate(`${pre}${chalk.bold(query.join(''))}\n${emojis}\n`);
+		});
+	});
 });

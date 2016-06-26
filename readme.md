@@ -1,6 +1,6 @@
 # emoj [![Build Status](https://travis-ci.org/sindresorhus/emoj.svg?branch=master)](https://travis-ci.org/sindresorhus/emoj)
 
-> Find relevant emojis from text on the command-line
+> Find relevant emoji from text on the command-line
 
 <img src="screenshot.gif" width="660">
 
@@ -15,6 +15,8 @@ Ensure you have [Node.js](https://nodejs.org) version 4 or higher installed. The
 ```
 $ npm install --global emoj
 ```
+
+Works best on macOS. Terminals on Linux render emojis in monochrome as they don't support color emojis. On Linux, I would recommend installing [Emoji One](https://github.com/eosrei/emojione-color-font#install-on-linux) for full emoji coverage. [Doesn't really work on Windows.](https://github.com/sindresorhus/emoj/issues/5)
 
 
 ## Usage
